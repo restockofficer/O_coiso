@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!-- Exemplo dado no 2º ano, mostrando a movimentação de uma imagem desenhada no canvas. -->
+<!-- Nesta observação vocês devem colocar os nomes dos alunos que ajudaram na atividade.
+Um aluno por linha e coloque o nome completo, o respectivo número e a turma.
+Nome: Aaron Carletti                        nº: 01      Turma: 3A              
+Nome: Gabriel Povoas Dutra                  nº: 09      Turma: 3A              
+Nome: Valentin Martins do Amaral            nº: 33      Turma: 3A                -->
+
+<html lang="pt-BR">
+<head>
+<title>Imagem se movendo</title>
+<link href="https://fonts.googleapis.com/css?family=Roboto|Sirin+Stencil" rel="stylesheet">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="./imagens/Nave_Base.png" type="image/x-icon"?v=2 />
+<link rel="icon" href="Imagens/Icon1/favicon.ico" type="image/x-icon"?v=2 />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    canvas {
+        border: 1px solid #000000;
+        background-color: #ffffff;
+    }
+</style>
+</head>
+<body onload="startGame();">
+
+<script>
+var myGamePiece;
+var myBullets = [];
+var naveImage = new Image();
+naveImage.src = './imagens/Nave.png';
+var lastFireTime = 0;
+var fireCooldown = 150; // Cooldown in milliseconds
+
+function startGame() {
+    myGamePiece = new component(50, 50, naveImage, 375, 275);
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas: document.createElement("canvas"),
+    start: function() {
+        this.canvas.width = 800;
+        this.canvas.height = 600;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown', function(e) {
+            myGameArea.keys = (myGameArea.keys || []);
+            myGameArea.keys[e.keyCode] = true;
+        });
+        window.addEventListener('keyup', function(e) {
+            myGameArea.keys[e.keyCode] = false;
+        });
+    },
+    clear: function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+
+function component(width, height, image, x, y) {
+    this.width = width;
+    this.height = height;
+    this.x = x;
+    this.y = y;
+    this.image = image;
+    this.update = function() {
+        var ctx = myGameArea.context;
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    }
+    this.newPos = function() {
+        if (myGameArea.keys && myGameArea.keys[65]) {this.x -= 2; } // tecla 'a'
+        if (myGameArea.keys && myGameArea.keys[68]) {this.x += 2; } // tecla 'd'
+        if (myGameArea.keys && myGameArea.keys[38]) {fireBullet(); } // seta para cima
+        this.x = Math.max(0, Math.min(this.x, myGameArea.canvas.width - this.width));
+        this.y = Math.max(0, Math.min(this.y, myGameArea.canvas.height - this.height));
+    }
+}
+
+function bullet(x, y) {
+    this.x = x;
+    this.y = y;
+    this.length = 30;
+    this.speed = 5;
+    this.update = function() {
+        var ctx = myGameArea.context;
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x, this.y - this.length);
+        ctx.stroke();
+    }
+    this.newPos = function() {
+        this.y -= this.speed;
+    }
+}
+
+function fireBullet() {
+    var now = new Date().getTime();
+    if (now - lastFireTime > fireCooldown) {
+        lastFireTime = now;
+        var x = myGamePiece.x + myGamePiece.width / 2;
+        var y = myGamePiece.y;
+        var newBullet = new bullet(x, y);
+        myBullets.push(newBullet);
+    }
+}
+
+function updateGameArea() {
+    myGameArea.clear();
+    myGamePiece.newPos();
+    myGamePiece.update();
+    
+    for (var i = 0; i < myBullets.length; i++) {
+        myBullets[i].newPos();
+        myBullets[i].update();
+        
+        // Remove the bullet if it goes out of the canvas
+        if (myBullets[i].y < -myBullets[i].length) {
+            myBullets.splice(i, 1);
+            i--;
+        }
+    }
+}
+</script>
+</body>
+</html> 
